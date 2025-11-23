@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Local data (don’t upload your PDFs or index)
+data/*.pdf
+data/*.index
+data/*_meta.json
+data/history.json
+
+# Secrets
+.env

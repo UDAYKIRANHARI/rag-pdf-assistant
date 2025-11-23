@@ -1,0 +1,44 @@
+# app.py
+import streamlit as st
+import os
+from ingest import ingest_pdf
+from retriever import retrieve, generate_answer
+
+st.set_page_config(page_title="PDF Q&A — RAG Demo", layout="centered")
+st.title("📄 Personal PDF Q&A — RAG Demo")
+
+st.markdown("Upload a PDF, ingest it into the local vector DB, then ask questions based on the PDF content.")
+
+uploaded = st.file_uploader("Upload a PDF file", type=["pdf"])
+if uploaded:
+    save_path = os.path.join("data", uploaded.name)
+    with open(save_path, "wb") as f:
+        f.write(uploaded.getbuffer())
+    st.success(f"Saved {uploaded.name} to data/")
+    if st.button("Ingest uploaded PDF"):
+        with st.spinner("Ingesting PDF (this can take some time the first run)..."):
+            try:
+                ingest_pdf(save_path)
+                st.success("Ingestion finished.")
+            except Exception as e:
+                st.error(f"Ingestion failed: {e}")
+
+st.markdown("---")
+query = st.text_input("Ask a question about ingested documents")
+k = st.slider("Number of retrieved chunks (k)", min_value=1, max_value=8, value=4)
+if st.button("Ask") and query.strip():
+    with st.spinner("Retrieving and generating answer..."):
+        try:
+            retrieved = retrieve(query, k=k)
+            answer = generate_answer(query, retrieved)
+            st.subheader("Answer")
+            st.write(answer)
+            st.subheader("Retrieved snippets")
+            for r in retrieved:
+                st.write(f"**{r['source']}** — page {r['page']} (chunk {r['chunk_idx']})")
+                st.write(r['text'][:800] + ("..." if len(r['text'])>800 else ""))
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+st.markdown("---")
+st.markdown("Tips: ingest PDFs first. If you want better answers, set OPENAI_API_KEY in `.env`.")
