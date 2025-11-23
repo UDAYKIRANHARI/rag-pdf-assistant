@@ -13,3 +13,6 @@ data/history.json
 
 # Secrets
 .env
+
+# Local test file (contains API key, must NOT be pushed)
+test_groq.py
